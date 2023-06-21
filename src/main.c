@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "wave.h"
 
@@ -81,10 +82,9 @@ int main(int argc, char *argv[]) {
 
 void reverseAudio(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize]) {
     for (int i = 0; i < numSamples / 2; i++) {
-        for (int j = 0; j < blockSize; j++) {
-            uint8_t temp = samples[i][j];
-            samples[i][j] = samples[numSamples - i - 1][j];
-            samples[numSamples - i - 1][j] = temp;
-        }
+        uint8_t temp[blockSize];
+        memcpy(temp, samples[i], blockSize);
+        memcpy(samples[i], samples[numSamples - i - 1], blockSize);
+        memcpy(samples[numSamples - i - 1], temp, blockSize);
     }
 }
