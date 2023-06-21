@@ -6,6 +6,7 @@
 
 #include "wave.h"
 
+void changeVolume(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize], float factor);
 void reverseAudio(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize]);
 
 int main(int argc, char *argv[]) {
@@ -56,6 +57,7 @@ int main(int argc, char *argv[]) {
     // TODO: Manipulate audio samples according to flag passed in by user
     switch (flag) {
         case 'v':
+            changeVolume(numSamples, blockSize, samples, atof(optarg));
             break;
         
         case 'r':
@@ -78,6 +80,17 @@ int main(int argc, char *argv[]) {
     fclose(outptr);
 
     return 0;
+}
+
+void changeVolume(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize], float factor) {
+    for (int i = 0; i < numSamples; i++) {
+        int16_t newSample = 0;
+        for (int j = 0; j < blockSize; j++) {
+            newSample |= (int16_t) samples[i][j] << (8 * j);
+        }
+        newSample *= factor;
+        memcpy(samples[i], &newSample, blockSize);
+    }
 }
 
 void reverseAudio(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize]) {
