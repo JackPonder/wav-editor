@@ -5,6 +5,8 @@
 
 #include "wave.h"
 
+void reverseAudio(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize]);
+
 int main(int argc, char *argv[]) {
     // Valid flags are v for volume and r for reverse
     char *validFlags = "v:r"; 
@@ -43,9 +45,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Read all audio data from infile
-    unsigned int blockSize = header.bitsPerSample / 8;
-    unsigned int numSamples = header.subchunk2Size / blockSize;
-    uint8_t samples[numSamples][blockSize]; 
+    unsigned int blockSize = header.bitsPerSample / 8, numSamples = header.subchunk2Size / blockSize;
+    uint8_t samples[numSamples][blockSize];
     fread(samples, header.subchunk2Size, 1, inptr);
 
     // Close infile since we have read all of its data
@@ -57,6 +58,7 @@ int main(int argc, char *argv[]) {
             break;
         
         case 'r':
+            reverseAudio(numSamples, blockSize, samples);
             break;
     }
 
@@ -75,4 +77,14 @@ int main(int argc, char *argv[]) {
     fclose(outptr);
 
     return 0;
+}
+
+void reverseAudio(int numSamples, int blockSize, uint8_t samples[numSamples][blockSize]) {
+    for (int i = 0; i < numSamples / 2; i++) {
+        for (int j = 0; j < blockSize; j++) {
+            uint8_t temp = samples[i][j];
+            samples[i][j] = samples[numSamples - i - 1][j];
+            samples[numSamples - i - 1][j] = temp;
+        }
+    }
 }
