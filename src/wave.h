@@ -20,4 +20,4 @@ typedef struct wavheader {
 WAVHEADER;
 
 // Returns true if header format contains the letters "WAVE", otherwise false
-bool iswave(WAVHEADER header);
+bool iswave(const WAVHEADER *header);
