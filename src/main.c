@@ -6,7 +6,7 @@
 #include "wave.h"
 
 void changeVolume(WAVHEADER *header, int16_t *samples, float factor);
-void changeSpeed(WAVHEADER *header, float factor);
+void changeSpeed(WAVHEADER *header, int16_t **samples, float factor);
 void reverse(WAVHEADER *header, int16_t *samples);
 
 int main(int argc, char *argv[]) {
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
             break;
 
         case 's':
-            changeSpeed(&header, atof(optarg));
+            changeSpeed(&header, &samples, atof(optarg));
             break;
 
         case 'r':
@@ -99,9 +99,31 @@ void changeVolume(WAVHEADER *header, int16_t *samples, float factor) {
     }
 }
 
-void changeSpeed(WAVHEADER *header, float factor) {
-    header->sampleRate *= factor;
-    header->byteRate *= factor;
+void changeSpeed(WAVHEADER *header, int16_t **samples, float factor) {
+    int16_t *copy = malloc(header->subchunk2Size);
+    if (copy == NULL) {
+        printf("Memory allocation error\n");
+        return;
+    }
+
+    uint32_t numSamples = header->subchunk2Size / sizeof(int16_t);
+    for (size_t i = 0; i < numSamples; i++) {
+        copy[i] = (*samples)[i];
+    }
+
+    *samples = realloc(*samples, header->subchunk2Size / factor);
+    if (*samples == NULL) {
+        printf("Memory allocation error\n");
+        free(copy);
+        return;
+    }
+    header->subchunk2Size /= factor;
+
+    for (size_t i = 0; i < numSamples / factor; i++) {
+        (*samples)[i] = copy[(size_t)(i * factor)];
+    }
+    
+    free(copy);
 }
 
 void reverse(WAVHEADER *header, int16_t *samples) {
