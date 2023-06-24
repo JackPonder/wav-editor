@@ -5,9 +5,13 @@
 
 #include "wave.h"
 
+void changeVolume(WAVHEADER *header, int16_t *samples, float factor);
+void changeSpeed(WAVHEADER *header, float factor);
+void reverse(WAVHEADER *header, int16_t *samples);
+
 int main(int argc, char *argv[]) {
     // Valid flags are v for volume and r for reverse
-    char *validFlags = "v:r"; 
+    char *validFlags = "v:s:r"; 
 
     // Get flag from command line arguments
     char flag = getopt(argc, argv, validFlags);
@@ -44,7 +48,10 @@ int main(int argc, char *argv[]) {
 
     // Read all audio data from infile
     int16_t *samples = malloc(header.subchunk2Size);
-    uint32_t numSamples = header.subchunk2Size / sizeof(int16_t);
+    if (samples == NULL) {
+        printf("Memory allocation error\n");
+        return 1;
+    }
     fread(samples, header.subchunk2Size, 1, inptr);
 
     // Close infile since we have read all of its data
@@ -53,17 +60,15 @@ int main(int argc, char *argv[]) {
     // Manipulate audio samples according to flag passed in by user
     switch (flag) {
         case 'v':
-            for (size_t i = 0; i < numSamples; i++) {
-                samples[i] *= atof(optarg);
-            }
+            changeVolume(&header, samples, atof(optarg));
+            break;
+
+        case 's':
+            changeSpeed(&header, atof(optarg));
             break;
 
         case 'r':
-            for (size_t i = 0; i < numSamples / 2; i++) {
-                int16_t temp = samples[i];
-                samples[i] = samples[numSamples - i - 1];
-                samples[numSamples - i - 1] = temp;
-            }
+            reverse(&header, samples);
             break;
     }
 
@@ -85,4 +90,25 @@ int main(int argc, char *argv[]) {
     fclose(outptr);
 
     return 0;
+}
+
+void changeVolume(WAVHEADER *header, int16_t *samples, float factor) {
+    uint32_t numSamples = header->subchunk2Size / sizeof(int16_t);
+    for (size_t i = 0; i < numSamples; i++) {
+        samples[i] *= factor;
+    }
+}
+
+void changeSpeed(WAVHEADER *header, float factor) {
+    header->sampleRate *= factor;
+    header->byteRate *= factor;
+}
+
+void reverse(WAVHEADER *header, int16_t *samples) {
+    uint32_t numSamples = header->subchunk2Size / sizeof(int16_t);
+    for (size_t i = 0; i < numSamples / 2; i++) {
+        int16_t temp = samples[i];
+        samples[i] = samples[numSamples - i - 1];
+        samples[numSamples - i - 1] = temp;
+    }
 }
