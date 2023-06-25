@@ -5,9 +5,9 @@
 
 #include "wave.h"
 
-void changeVolume(WAVHEADER *header, int16_t *samples, float factor);
+void changeVolume(WAVHEADER *header, int16_t **samples, float factor);
 void changeSpeed(WAVHEADER *header, int16_t **samples, float factor);
-void reverse(WAVHEADER *header, int16_t *samples);
+void reverse(WAVHEADER *header, int16_t **samples);
 
 int main(int argc, char *argv[]) {
     // Valid flags are v for volume and r for reverse
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     // Manipulate audio samples according to flag passed in by user
     switch (flag) {
         case 'v':
-            changeVolume(&header, samples, atof(optarg));
+            changeVolume(&header, &samples, atof(optarg));
             break;
 
         case 's':
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
             break;
 
         case 'r':
-            reverse(&header, samples);
+            reverse(&header, &samples);
             break;
     }
 
@@ -92,10 +92,10 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void changeVolume(WAVHEADER *header, int16_t *samples, float factor) {
+void changeVolume(WAVHEADER *header, int16_t **samples, float factor) {
     uint32_t numSamples = header->subchunk2Size / sizeof(int16_t);
     for (size_t i = 0; i < numSamples; i++) {
-        samples[i] *= factor;
+        (*samples)[i] *= factor;
     }
 }
 
@@ -126,11 +126,11 @@ void changeSpeed(WAVHEADER *header, int16_t **samples, float factor) {
     free(copy);
 }
 
-void reverse(WAVHEADER *header, int16_t *samples) {
+void reverse(WAVHEADER *header, int16_t **samples) {
     uint32_t numSamples = header->subchunk2Size / sizeof(int16_t);
     for (size_t i = 0; i < numSamples / 2; i++) {
-        int16_t temp = samples[i];
-        samples[i] = samples[numSamples - i - 1];
-        samples[numSamples - i - 1] = temp;
+        int16_t temp = (*samples)[i];
+        (*samples)[i] = (*samples)[numSamples - i - 1];
+        (*samples)[numSamples - i - 1] = temp;
     }
 }
